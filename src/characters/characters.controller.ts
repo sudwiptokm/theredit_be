@@ -22,7 +22,12 @@ export class CharactersController {
   @ApiOperation({ summary: 'Get a list of characters with pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'List of characters' })
-  async findAll(@Query('page') page: number = 1): Promise<Character[]> {
+  async findAll(@Query('page') page: number = 1): Promise<{
+    characters: Character[];
+    total: number;
+    next: string;
+    previous: string;
+  }> {
     return await this.charactersService.findAll(page);
   }
 
@@ -30,7 +35,12 @@ export class CharactersController {
   @ApiOperation({ summary: 'Search characters by name' })
   @ApiQuery({ name: 'name', required: true })
   @ApiResponse({ status: 200, description: 'List of matching characters' })
-  async search(@Query() query: SearchCharactersDto): Promise<Character[]> {
+  async search(@Query() query: SearchCharactersDto): Promise<{
+    characters: Character[];
+    total: number;
+    next: string;
+    previous: string;
+  }> {
     return this.charactersService.search(query.name);
   }
 

@@ -23,18 +23,31 @@ export class CharactersService {
     );
   }
 
-  async findAll(page: number = 1): Promise<Character[]> {
+  async findAll(page: number = 1): Promise<{
+    characters: Character[];
+    total: number;
+    next: string;
+    previous: string;
+  }> {
     const response = await firstValueFrom(
-      this.httpService.get<{ results: SwapiResource[] }>(
-        `${this.baseUrl}/people?page=${page}`,
-      ),
+      this.httpService.get<{
+        results: SwapiResource[];
+        count: number;
+        next: string;
+        previous: string;
+      }>(`${this.baseUrl}/people?page=${page}`),
     );
 
     const characters = await Promise.all(
       response.data.results.map(async (char) => this.enrichCharacter(char)),
     );
 
-    return characters;
+    return {
+      characters,
+      total: response.data.count,
+      next: response.data.next,
+      previous: response.data.previous,
+    };
   }
 
   async findOne(id: string): Promise<any> {
@@ -51,18 +64,31 @@ export class CharactersService {
     }
   }
 
-  async search(name: string): Promise<Character[]> {
+  async search(name: string): Promise<{
+    characters: Character[];
+    total: number;
+    next: string;
+    previous: string;
+  }> {
     const response = await firstValueFrom(
-      this.httpService.get<{ results: SwapiResource[] }>(
-        `${this.baseUrl}/people/?search=${encodeURIComponent(name)}`,
-      ),
+      this.httpService.get<{
+        results: SwapiResource[];
+        count: number;
+        next: string;
+        previous: string;
+      }>(`${this.baseUrl}/people/?search=${encodeURIComponent(name)}`),
     );
 
     const characters = await Promise.all(
       response.data.results.map(async (char) => this.enrichCharacter(char)),
     );
 
-    return characters;
+    return {
+      characters,
+      total: response.data.count,
+      next: response.data.next,
+      previous: response.data.previous,
+    };
   }
 
   private async enrichCharacter(char: any): Promise<Character> {
