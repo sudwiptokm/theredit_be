@@ -91,6 +91,44 @@ export class CharactersService {
     };
   }
 
+  async listCharacters(
+    options: { search?: string; page?: number } = {},
+  ): Promise<{
+    characters: Character[];
+    total: number;
+    next: string;
+    previous: string;
+  }> {
+    const { search, page = 1 } = options;
+
+    // Build the query parameters
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (search) params.append('search', search);
+
+    const url = `${this.baseUrl}/people/?${params.toString()}`;
+
+    const response = await firstValueFrom(
+      this.httpService.get<{
+        results: SwapiResource[];
+        count: number;
+        next: string;
+        previous: string;
+      }>(url),
+    );
+
+    const characters = await Promise.all(
+      response.data.results.map(async (char) => this.enrichCharacter(char)),
+    );
+
+    return {
+      characters,
+      total: response.data.count,
+      next: response.data.next,
+      previous: response.data.previous,
+    };
+  }
+
   private async enrichCharacter(char: any): Promise<Character> {
     // Collect all URLs that need to be fetched
     const urlsToFetch = [
@@ -115,15 +153,20 @@ export class CharactersService {
 
     // Now construct the character with the fetched resources
     return {
-      id: char.uid,
+      id: char.url.split('/').slice(-2, -1)[0],
       name: char.name,
       homeworld: resourceMap.get(char?.homeworld)?.name || 'N/A',
       species: (char?.species || []).map(
         (url) => resourceMap.get(url)?.name || 'N/A',
       ),
-      films: (char?.films || []).map(
-        (url) => resourceMap.get(url)?.title || 'N/A',
-      ),
+      films: (char?.films || []).map((url) => {
+        const film = resourceMap.get(url);
+        return {
+          title: film?.title || 'N/A',
+          episode_id: film?.episode_id || 0,
+          release_date: film?.release_date || 'N/A',
+        };
+      }),
       height: char.height,
       mass: char.mass,
       hair_color: char.hair_color,

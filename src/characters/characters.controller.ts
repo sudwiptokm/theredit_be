@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CharactersService } from './characters.service';
+import { ListCharactersDto } from './dto/list-characters.dto';
 import { SearchCharactersDto } from './dto/search-characters.dto';
 import { Character } from './interfaces/character.interface';
 
@@ -19,16 +20,20 @@ export class CharactersController {
   constructor(private readonly charactersService: CharactersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get a list of characters with pagination' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiOperation({
+    summary: 'Get a list of characters with optional search and pagination',
+  })
   @ApiResponse({ status: 200, description: 'List of characters' })
-  async findAll(@Query('page') page: number = 1): Promise<{
+  async listCharacters(@Query() query: ListCharactersDto): Promise<{
     characters: Character[];
     total: number;
     next: string;
     previous: string;
   }> {
-    return await this.charactersService.findAll(page);
+    return this.charactersService.listCharacters({
+      search: query.search,
+      page: query.page,
+    });
   }
 
   @Get('search')

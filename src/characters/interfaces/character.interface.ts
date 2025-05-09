@@ -1,9 +1,11 @@
+import { Film } from './film.interface';
+
 export interface Character {
   id: string;
   name: string;
   homeworld: string;
   species: string[];
-  films: string[];
+  films: Film[];
   height: number;
   mass: number;
   hair_color: string;
